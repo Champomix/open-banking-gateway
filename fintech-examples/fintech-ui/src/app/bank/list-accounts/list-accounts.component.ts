@@ -55,27 +55,12 @@ export class ListAccountsComponent implements OnInit {
           // to be removed when issue https://github.com/adorsys/open-banking-gateway/issues/848 is resolved
           // or Fintech UI refactored
           this.accounts = response.body.accounts;
-          let loa = [];
-          this.loadTestAccounts();
+          const loa = [];
           for (const accountDetail of this.accounts) {
             loa.push(new AccountStruct(accountDetail.resourceId, accountDetail.iban, accountDetail.name));
           }
           this.storageService.setLoa(loa);
       }
     });
-  }
-
-  loadTestAccounts(): void {
-    const loa = [];
-    const id = 'dfdfdfd4drrrrr-444rr33-er43';
-    const id1 = '4443fdfd4drrrrr-444rr33-er43';
-    const iban = 'DE2750010517421134792522';
-    const iban1 = 'DE2750010517421134792622';
-    const name = 'bob';
-    const name1 = 'tom';
-    loa.push(new AccountStruct(id, iban, name));
-    loa.push(new AccountStruct(id1, iban1, name1));
-    this.accounts.push(loa.pop());
-    this.accounts.push(loa.pop());
   }
 }
