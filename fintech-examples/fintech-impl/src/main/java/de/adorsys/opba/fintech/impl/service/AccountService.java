@@ -36,7 +36,6 @@ public class AccountService {
     private final RedirectHandlerService redirectHandlerService;
     private final ConsentRepository consentRepository;
     private final HandleAcceptedService handleAcceptedService;
-    private final ConsentService consentService;
     private final BankSearchService searchService;
 
     public ResponseEntity listAccounts(SessionEntity sessionEntity,
@@ -104,8 +103,8 @@ public class AccountService {
                 bankID,
                 null,
                 serviceSessionID,
-                withBalance,
-                useOpbCache);
+                useOpbCache,
+                withBalance);
     }
 
     private ResponseEntity consentNotYetAvailable(String bankID, SessionEntity sessionEntity, String redirectCode, UUID xRequestId, Optional<ConsentEntity> optionalConsent) {
@@ -122,5 +121,4 @@ public class AccountService {
                 COMPUTE_FINTECH_ID,
                 bankID, null, serviceSessionID, null, null, null, null, null);
     }
-
 }
