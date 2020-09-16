@@ -41,12 +41,12 @@ public class AccountService {
 
     public ResponseEntity listAccounts(SessionEntity sessionEntity,
                                        String fintechOkUrl, String fintechNOKUrl,
-                                       String bankId, LoARetrievalInformation loARetrievalInformation, boolean withBalance) {
+                                       String bankId, LoARetrievalInformation loARetrievalInformation, boolean withBalance, Boolean useOpbCache) {
 
         log.info("List of accounts {} with balance {}", loARetrievalInformation, withBalance);
         final String fintechRedirectCode = UUID.randomUUID().toString();
 
-        ResponseEntity accounts = readOpbaResponse(bankId, sessionEntity, fintechRedirectCode, loARetrievalInformation, withBalance);
+        ResponseEntity accounts = readOpbaResponse(bankId, sessionEntity, fintechRedirectCode, loARetrievalInformation, withBalance, useOpbCache);
 
         switch (accounts.getStatusCode()) {
             case OK:
@@ -63,7 +63,7 @@ public class AccountService {
     }
 
 
-    private ResponseEntity readOpbaResponse(String bankID, SessionEntity sessionEntity, String redirectCode, LoARetrievalInformation loARetrievalInformation, boolean withBalance) {
+    private ResponseEntity readOpbaResponse(String bankID, SessionEntity sessionEntity, String redirectCode, LoARetrievalInformation loARetrievalInformation, boolean withBalance, Boolean useOpbCache) {
         UUID xRequestId = UUID.fromString(restRequestContext.getRequestId());
         Optional<ConsentEntity> optionalConsent = Optional.empty();
         if (loARetrievalInformation.equals(LoARetrievalInformation.FROM_TPP_WITH_AVAILABLE_CONSENT)) {
@@ -76,7 +76,7 @@ public class AccountService {
                 optionalConsent.get().getUserEntity().getLoginUserName(),
                 optionalConsent.get().getBankId(),
                 optionalConsent.get().getCreationTime());
-            return consentAvailable(bankID, sessionEntity, redirectCode, xRequestId, optionalConsent, withBalance);
+            return consentAvailable(bankID, sessionEntity, redirectCode, xRequestId, optionalConsent, withBalance, useOpbCache);
         }
 
         BankProfileResponse bankProfile = searchService.getBankProfileById(bankID).getBody();
@@ -86,10 +86,10 @@ public class AccountService {
             return consentNotYetAvailable(bankID, sessionEntity, redirectCode, xRequestId, optionalConsent);
         }
 
-        return consentAvailable(bankID, sessionEntity, redirectCode, xRequestId, optionalConsent, withBalance);
+        return consentAvailable(bankID, sessionEntity, redirectCode, xRequestId, optionalConsent, withBalance, useOpbCache);
     }
 
-    private ResponseEntity consentAvailable(String bankID, SessionEntity sessionEntity, String redirectCode, UUID xRequestId, Optional<ConsentEntity> optionalConsent, boolean withBalance) {
+    private ResponseEntity consentAvailable(String bankID, SessionEntity sessionEntity, String redirectCode, UUID xRequestId, Optional<ConsentEntity> optionalConsent, boolean withBalance, Boolean useOpbCache) {
         log.info("do LOA for bank {} {} consent", bankID, optionalConsent.isPresent() ? "with" : "without");
         UUID serviceSessionID = optionalConsent.map(ConsentEntity::getTppServiceSessionId).orElse(null);
         return tppAisClient.getAccounts(
@@ -103,7 +103,9 @@ public class AccountService {
                 COMPUTE_FINTECH_ID,
                 bankID,
                 null,
-                serviceSessionID, withBalance);
+                serviceSessionID,
+                withBalance,
+                useOpbCache);
     }
 
     private ResponseEntity consentNotYetAvailable(String bankID, SessionEntity sessionEntity, String redirectCode, UUID xRequestId, Optional<ConsentEntity> optionalConsent) {
